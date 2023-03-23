@@ -10,7 +10,7 @@ RUN dnf -y --setopt="tsflags=nodocs" update && \
 	qemu-user-static-x86 qemu-user-static-aarch64 rpm-sign expect && \
 	dnf clean all && rm -rf "/var/cache/dnf"
 
-RUN useradd mockbuilder && \
+RUN useradd -u 2001 -U mockbuilder && \
     usermod -a -G mock mockbuilder && \
     chmod g+w /etc/mock/*.cfg
 

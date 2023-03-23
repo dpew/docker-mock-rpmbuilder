@@ -1,13 +1,27 @@
 #!/usr/bin/bash
-set -e
+set -ex
+
 
 MOCK_BIN="/usr/bin/mock"
 MOCK_CONF_FOLDER="/etc/mock"
-OUTPUT_FOLDER="${MOUNT_POINT}/output"
-CACHE_FOLDER="${MOUNT_POINT}/cache"
+MOCK_RESULTS_FOLDER=/mockresults
+MOCK_OUTPUT_FOLDER="${MOCK_RESULTS_FOLDER}/output"
+CACHE_FOLDER="${MOCK_RESULTS_FOLDER}/cache"
 # shellcheck disable=SC2206
 MOCK_DEFINES=(${MOCK_DEFINES})
 DEF_SIZE="${#MOCK_DEFINES[@]}"
+OWNERSHIP=${OWNERSHIP:-$(id -u mockbuilder):$(id -g mockbuilder)}
+
+RESULTS_FOLDER="${MOUNT_POINT}/output"
+
+post_results() {
+   if [ -d "$MOCK_OUTPUT_FOLDER" ] ; then
+     chown -R "${OWNERSHIP}" "${MOCK_OUTPUT_FOLDER}"
+     cp -rp "${MOCK_OUTPUT_FOLDER}" "${RESULTS_FOLDER}"
+   fi
+}
+
+trap post_results EXIT
 
 if [ "${DEF_SIZE}" -gt 0 ]
   then
@@ -59,7 +73,7 @@ if [ -n "${HTTP_PROXY}" ] || [ -n "${http_proxy}" ]
 
 fi
 
-OUTPUT_FOLDER="${OUTPUT_FOLDER}/${MOCK_CONFIG}"
+OUTPUT_FOLDER="${MOCK_OUTPUT_FOLDER}/${MOCK_CONFIG}"
 rm -rf "${OUTPUT_FOLDER}"
 MOCK_CONFIG_OPTS="--config-opts='cache_topdir=${CACHE_FOLDER}'"
 mkdir -p "${OUTPUT_FOLDER}"
@@ -155,5 +169,6 @@ if [ -n "${SIGNATURE}" ]
 else
   echo "No RPMs signature requested"
 fi
+
 
 echo "Build finished. Check results inside 'output' directory"
